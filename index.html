@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小智的几何探索 - 教学闯关版</title>
+    <style>
+        :root {
+            --primary: #1768c4;
+            --primary-soft: #4da4ff;
+            --accent: #ffb347;
+            --success: #2a9d6f;
+            --danger: #d64545;
+            --bg: #f6f1e6;
+            --panel: rgba(255, 253, 248, 0.86);
+            --panel-strong: #fffdf8;
+            --border: #d9e4f2;
+            --ink: #17324d;
+            --ink-soft: #5f7489;
+            --shadow: 0 18px 44px rgba(23, 50, 77, 0.12);
+            --glow: 0 14px 30px rgba(23, 104, 196, 0.16);
+        }
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 10% 10%, rgba(77, 164, 255, 0.14), transparent 30%),
+                radial-gradient(circle at 85% 15%, rgba(255, 179, 71, 0.18), transparent 24%),
+                linear-gradient(180deg, #f8f1e5 0%, #eef5ff 56%, #f9fbfe 100%);
+            user-select: none;
+            overflow: hidden;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px);
+            background-size: 36px 36px;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+        /* ================= 屏幕统一切换逻辑 ================= */
+        .screen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: transparent;
+            transition: opacity 0.3s ease;
+        }
+        .hidden { display: none !important; opacity: 0; }
+
+        @keyframes riseIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ================= 首页大厅 ================= */
+        #screen-home {
+            align-items: center;
+            justify-content: center;
+            padding: 28px;
+        }
+        .home-container {
+            width: min(1120px, 100%);
+            position: relative;
+            z-index: 1;
+            animation: riseIn 0.55s ease;
+        }
+        .home-hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+            gap: 24px;
+            align-items: stretch;
+        }
+        .hero-panel,
+        .entry-panel,
+        .level-overview {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(14px);
+        }
+        .hero-panel {
+            padding: 34px 38px;
+            border-radius: 28px;
+        }
+        .hero-eyebrow,
+        .overview-kicker,
+        .task-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--primary);
+        }
+        .home-container h1 {
+            font-family: "Trebuchet MS", "Microsoft YaHei", sans-serif;
+            font-size: clamp(2.8rem, 6vw, 4.4rem);
+            color: #10243a;
+            margin: 14px 0 12px;
+            letter-spacing: 1px;
+            line-height: 1.03;
+        }
+        .subtitle {
+            font-size: 1.08rem;
+            color: var(--ink-soft);
+            line-height: 1.8;
+            max-width: 620px;
+            margin: 0;
+        }
+        .path-strip {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 24px;
+        }
+        .path-chip,
+        .overview-pill,
+        .workspace-pill,
+        .tool-chip,
+        .task-tool-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .path-chip {
+            background: rgba(23, 104, 196, 0.08);
+            color: var(--primary);
+            border: 1px solid rgba(23, 104, 196, 0.12);
+        }
+        .home-stats {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 28px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.66);
+            border-radius: 18px;
+            padding: 18px 16px;
+            border: 1px solid rgba(217, 228, 242, 0.92);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.65);
+        }
+        .stat-label {
+            display: block;
+            font-size: 12px;
+            color: var(--ink-soft);
+            margin-bottom: 8px;
+        }
+        .stat-card strong {
+            font-size: 1.35rem;
+            color: #10243a;
+        }
+        .entry-panel {
+            padding: 26px;
+            border-radius: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .entry-caption {
+            margin: 0;
+            color: var(--ink-soft);
+            font-size: 14px;
+        }
+        .entry-cards {
+            display: grid;
+            gap: 16px;
+            flex: 1;
+        }
+        .card {
+            background: rgba(255,255,255,0.82);
+            padding: 28px 24px;
+            border-radius: 22px;
+            box-shadow: 0 10px 28px rgba(16, 36, 58, 0.08);
+            cursor: pointer;
+            transition: transform 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+            border: 1px solid rgba(217, 228, 242, 0.95);
+            position: relative;
+            overflow: hidden;
+        }
+        .card::after {
+            content: "";
+            position: absolute;
+            inset: auto -35% -55% 38%;
+            height: 120px;
+            background: radial-gradient(circle, rgba(77, 164, 255, 0.18), transparent 70%);
+            pointer-events: none;
+        }
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--glow);
+            border-color: rgba(23, 104, 196, 0.34);
+        }
+        .card-icon {
+            font-size: 2.3rem;
+            margin-bottom: 16px;
+        }
+        .card h2 {
+            margin: 0 0 10px 0;
+            color: #10243a;
+            font-size: 1.35rem;
+        }
+        .card p {
+            color: var(--ink-soft);
+            font-size: 0.95rem;
+            line-height: 1.72;
+            margin: 0;
+        }
+        .primary-card {
+            background: linear-gradient(145deg, #10243a 0%, #1e4f8c 100%);
+            color: white;
+            box-shadow: 0 18px 36px rgba(16, 36, 58, 0.24);
+        }
+        .primary-card::after {
+            background: radial-gradient(circle, rgba(255, 179, 71, 0.22), transparent 68%);
+        }
+        .primary-card h2,
+        .primary-card p { color: white; }
+        .primary-card:hover {
+            box-shadow: 0 20px 40px rgba(16, 36, 58, 0.32);
+        }
+
+        /* ================= 关卡选择页 ================= */
+        .level-container {
+            padding: 24px 28px 34px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            flex-grow: 1;
+            align-items: center;
+        }
+        .level-overview {
+            width: min(1120px, 100%);
+            border-radius: 24px;
+            padding: 22px 24px;
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            align-items: center;
+            animation: riseIn 0.45s ease;
+        }
+        .level-overview h4 {
+            margin: 8px 0 6px;
+            font-size: 1.35rem;
+            color: #10243a;
+        }
+        .level-overview p {
+            margin: 0;
+            color: var(--ink-soft);
+        }
+        .overview-side {
+            min-width: min(380px, 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .progress-rail {
+            width: 100%;
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(23, 104, 196, 0.12);
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--primary-soft) 100%);
+            transition: width 0.28s ease;
+        }
+        .overview-metrics {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .overview-pill {
+            background: rgba(255,255,255,0.7);
+            color: var(--ink);
+            border: 1px solid rgba(217, 228, 242, 0.92);
+        }
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 18px;
+            width: 100%;
+            max-width: 1120px;
+            align-content: start;
+        }
+        .level-btn {
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(217, 228, 242, 0.95);
+            border-radius: 22px;
+            padding: 20px;
+            text-align: left;
+            cursor: pointer;
+            transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 230px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 12px 28px rgba(16, 36, 58, 0.06);
+            animation: riseIn 0.42s ease;
+        }
+        .level-btn::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            opacity: 0.9;
+        }
+        .level-btn[data-stage="1"]::before { background: linear-gradient(90deg, #1d75d8, #79c3ff); }
+        .level-btn[data-stage="2"]::before { background: linear-gradient(90deg, #1f8f74, #7fd1a4); }
+        .level-btn[data-stage="3"]::before { background: linear-gradient(90deg, #ff9f43, #ffd27d); }
+        .level-btn[data-stage="4"]::before { background: linear-gradient(90deg, #7b61ff, #c694ff); }
+        .level-btn.unlocked:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--glow);
+            border-color: rgba(23, 104, 196, 0.3);
+        }
+        .level-btn.locked {
+            background: rgba(246, 247, 249, 0.84);
+            cursor: not-allowed;
+            color: #a0aebe;
+            border-style: dashed;
+            box-shadow: none;
+        }
+        .level-btn.passed {
+            border-color: rgba(42, 157, 111, 0.28);
+            box-shadow: 0 14px 28px rgba(42, 157, 111, 0.1);
+        }
+        .level-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+        .level-stage {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+        .level-state {
+            font-size: 12px;
+            color: var(--ink-soft);
+        }
+        .level-id {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--ink-soft);
+            display: block;
+        }
+        .level-title {
+            font-size: 1.14rem;
+            font-weight: 700;
+            margin: 0;
+            color: #10243a;
+        }
+        .level-desc,
+        .level-focus {
+            font-size: 0.92rem;
+            color: var(--ink-soft);
+            margin: 0;
+            line-height: 1.68;
+        }
+        .level-focus { margin-top: auto; }
+        .level-icon {
+            position: absolute;
+            right: 18px;
+            top: 18px;
+            font-size: 1.55rem;
+        }
+        .level-tools,
+        .task-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tool-chip,
+        .task-tool-chip {
+            background: rgba(23, 104, 196, 0.08);
+            color: var(--primary);
+            border: 1px solid rgba(23, 104, 196, 0.12);
+        }
+        .level-btn.locked .tool-chip {
+            background: rgba(0, 0, 0, 0.03);
+            color: #95a2b3;
+            border-color: rgba(149, 162, 179, 0.18);
+        }
+
+        /* ================= 工作区统一样式 ================= */
+        .app-header {
+            background: rgba(16, 36, 58, 0.92);
+            color: white;
+            padding: 12px 20px;
+            min-height: 58px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 8px 20px rgba(16, 36, 58, 0.16);
+            z-index: 20;
+            backdrop-filter: blur(12px);
+        }
+        .app-header h3 { margin: 0; font-size: 17px; font-weight: 700; }
+        .header-center {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+            flex: 1;
+        }
+        .workspace-subtitle {
+            font-size: 12px;
+            color: rgba(255,255,255,0.72);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .header-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .workspace-pill {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.16);
+        }
+        .btn-back {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.24);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.45); }
+
+        /* 任务面板 */
+        .task-panel {
+            background: linear-gradient(90deg, rgba(230, 244, 255, 0.94) 0%, rgba(255, 248, 233, 0.94) 100%);
+            border-bottom: 1px solid rgba(145, 213, 255, 0.6);
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            font-size: 14px;
+            color: #0f4d8c;
+            z-index: 15;
+            box-shadow: 0 6px 18px rgba(16, 36, 58, 0.05);
+        }
+        .task-copy {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+        .task-title {
+            font-size: 18px;
+            color: #10243a;
+        }
+        #task-desc {
+            color: var(--ink);
+            line-height: 1.72;
+        }
+        .task-meta {
+            color: var(--ink-soft);
+            font-size: 13px;
+        }
+        #btn-submit-task {
+            background: linear-gradient(135deg, var(--success) 0%, #5ecf98 100%);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 14px;
+            font-weight: 700;
+            box-shadow: 0 10px 22px rgba(42, 157, 111, 0.22);
+        }
+        #btn-submit-task:hover { filter: brightness(1.03); }
+
+        /* 工具栏高级按钮隐藏 */
+        .tool-hidden { display: none !important; }
+
+        /* 工具栏与画布 */
+        .toolbar {
+            background: rgba(255, 253, 248, 0.94);
+            padding: 10px 12px;
+            box-shadow: 0 6px 20px rgba(16, 36, 58, 0.06);
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            z-index: 10;
+            border-bottom: 1px solid rgba(217, 228, 242, 0.85);
+            backdrop-filter: blur(12px);
+        }
+        .group {
+            display: flex;
+            gap: 6px;
+            padding: 0 10px;
+            border-right: 1px solid rgba(217, 228, 242, 0.92);
+            align-items: center;
+        }
+        .group:last-child { border-right: none; }
+        button {
+            padding: 7px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid rgba(217, 228, 242, 0.95);
+            background-color: rgba(255,255,255,0.85);
+            border-radius: 12px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--ink);
+            outline: none;
+        }
+        button:hover {
+            border-color: rgba(23, 104, 196, 0.34);
+            color: var(--primary);
+            background-color: rgba(230, 244, 255, 0.96);
+        }
+        button.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-soft) 100%);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 8px 18px rgba(23, 104, 196, 0.22);
+        }
+        button:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
+            background-color: rgba(245,245,245,0.8);
+            border-color: rgba(217,217,217,0.85);
+            color: #a3adba;
+        }
+        button.danger:hover { background-color: #fff1f0; border-color: var(--danger); color: var(--danger); }
+
+        #canvas-container {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 12% 18%, rgba(23, 104, 196, 0.06), transparent 24%),
+                linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
+            cursor: default;
+        }
+        canvas { display: block; background-color: transparent; }
+
+        .status-bar {
+            padding: 0 20px;
+            height: 34px;
+            background: linear-gradient(90deg, var(--primary) 0%, #4c9cfb 100%);
+            color: #fff;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        #context-menu {
+            position: absolute;
+            display: none;
+            background: rgba(255,255,255,0.96);
+            border: 1px solid rgba(217, 228, 242, 0.9);
+            box-shadow: 0 16px 28px rgba(16, 36, 58, 0.16);
+            border-radius: 14px;
+            padding: 6px 0;
+            min-width: 140px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        #context-menu div {
+            padding: 9px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--ink);
+            transition: background 0.2s;
+        }
+        #context-menu div:hover { background-color: rgba(230, 244, 255, 0.85); color: var(--primary); }
+        #context-menu div.delete { color: var(--danger); }
+        #context-menu div.delete:hover { background-color: #fff1f0; }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(16, 36, 58, 0.84);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            pointer-events: none;
+            transform: translate(10px, 10px);
+            display: none;
+            z-index: 50;
+        }
+
+        @media (max-width: 960px) {
+            .home-hero { grid-template-columns: 1fr; }
+            .home-stats { grid-template-columns: 1fr; }
+            .level-overview { flex-direction: column; align-items: flex-start; }
+            .overview-side { min-width: 0; width: 100%; }
+            .task-panel { flex-direction: column; align-items: flex-start; }
+            .app-header { flex-wrap: wrap; }
+            .header-meta { width: 100%; justify-content: flex-start; }
+        }
+
+        @media (max-width: 720px) {
+            #screen-home { padding: 16px; }
+            .hero-panel, .entry-panel { padding: 22px 20px; }
+            .level-container { padding: 16px; }
+            .toolbar { justify-content: flex-start; }
+            .group { border-right: none; padding: 0 4px; }
+            .status-bar { padding: 0 12px; height: auto; min-height: 34px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="screen-home" class="screen">
+    <div class="home-container">
+        <div class="home-hero">
+            <section class="hero-panel">
+                <span class="hero-eyebrow">Geometry Adventure Route</span>
+                <h1>📐 小智的几何探索</h1>
+                <p class="subtitle">从半径相等、中垂线、角平分，一路推进到矩形与正方形。每一关只强调一个几何关系，让作图过程更像一张真正可推进的学习地图。</p>
+                <div class="path-strip">
+                    <span class="path-chip">第一章 圆与线</span>
+                    <span class="path-chip">第二章 垂线与角</span>
+                    <span class="path-chip">第三章 平行与结构</span>
+                    <span class="path-chip">第四章 组合挑战</span>
+                </div>
+                <div class="home-stats">
+                    <div class="stat-card">
+                        <span class="stat-label">已完成关卡</span>
+                        <strong id="home-finished-count">0 / 10</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">下一目标</span>
+                        <strong id="home-next-level">关卡 1</strong>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">已解锁工具</span>
+                        <strong id="home-tool-count">5 个</strong>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="entry-panel">
+                <p class="entry-caption">选择模式</p>
+                <div class="entry-cards">
+                    <div class="card" onclick="enterSandbox()">
+                        <div class="card-icon">🎨</div>
+                        <h2>自由探索</h2>
+                        <p>沙盒模式，所有高级工具全部解锁，适合自由作图、验证猜想和临摹课堂图形。</p>
+                    </div>
+
+                    <div class="card primary-card" onclick="enterCampaign()">
+                        <div class="card-icon">🏆</div>
+                        <h2>几何闯关</h2>
+                        <p>10 关教学路线，每一关都有学习重点、动态判题和逐步解锁的工具节奏。</p>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<div id="screen-levels" class="screen hidden">
+    <header class="app-header">
+        <button class="btn-back" onclick="switchScreen('screen-home')">⬅ 返回大厅</button>
+        <h3>🏆 选择关卡</h3>
+        <button class="danger" onclick="resetProgress()" style="font-size: 12px;">重置进度</button>
+    </header>
+    <div class="level-container">
+        <div class="level-overview">
+            <div>
+                <span class="overview-kicker">学习地图</span>
+                <h4>从基础构形到组合挑战</h4>
+                <p id="campaign-progress-text">已完成 0 / 10 关，继续向前推进。</p>
+            </div>
+            <div class="overview-side">
+                <div class="progress-rail">
+                    <div id="campaign-progress-fill" class="progress-fill"></div>
+                </div>
+                <div class="overview-metrics">
+                    <span id="campaign-next-goal" class="overview-pill">下一关：关卡 1</span>
+                    <span id="campaign-tools-count" class="overview-pill">已解锁工具：5 个</span>
+                </div>
+            </div>
+        </div>
+        <div id="level-grid" class="level-grid">
+            </div>
+    </div>
+</div>
+
+<div id="screen-workspace" class="screen hidden">
+    <header class="app-header">
+        <button class="btn-back" onclick="exitWorkspace()">⬅ 返回</button>
+        <div class="header-center">
+            <h3 id="workspace-title">📐 画板</h3>
+            <span id="workspace-subtitle" class="workspace-subtitle">自由构图与推演</span>
+        </div>
+        <div class="header-meta">
+            <span id="workspace-stage" class="workspace-pill">自由模式</span>
+            <span id="workspace-date" class="workspace-pill">--</span>
+        </div>
+    </header>
+
+    <div id="task-panel" class="task-panel hidden">
+        <div class="task-copy">
+            <span id="task-kicker" class="task-kicker">当前任务</span>
+            <strong id="task-title" class="task-title">...</strong>
+            <span id="task-desc">...</span>
+            <span id="task-meta" class="task-meta">...</span>
+            <div id="task-tools" class="task-tools"></div>
+        </div>
+        <button id="btn-submit-task" onclick="checkTask()">验证通关</button>
+    </div>
+
+    <div class="toolbar" id="main-toolbar">
+        <div class="group">
+            <button id="btn-pan" onclick="setMode('pan')" title="移动视图 (快捷键: Space)">✋ 抓手</button>
+            <button id="btn-label" onclick="setMode('label')" title="重命名点">🔤 命名</button>
+        </div>
+        <div class="group">
+            <button id="btn-point" onclick="setMode('point')">📍 点</button>
+            <button id="btn-line" onclick="setMode('line')">📏 直线</button>
+            <button id="btn-circle" onclick="setMode('circle')">⭕ 圆</button>
+        </div>
+        <div class="group adv-tool" data-tool="midpoint">
+            <button id="btn-midpoint" onclick="setMode('midpoint')">➗ 中点</button>
+        </div>
+        <div class="group adv-tool" data-tool="perp">
+            <button id="btn-perp" onclick="setMode('perp')">⊥ 垂线</button>
+        </div>
+        <div class="group adv-tool" data-tool="parallel">
+            <button id="btn-parallel" onclick="setMode('parallel')">∥ 平行线</button>
+        </div>
+        <div class="group adv-tool" data-tool="perpBisector">
+            <button id="btn-perpBisector" onclick="setMode('perpBisector')" title="两点的垂直平分线">⚡ 垂直平分</button>
+        </div>
+        <div class="group adv-tool" data-tool="angleBisector">
+            <button id="btn-angleBisector" onclick="setMode('angleBisector')" title="三个点确定的角平分线">∠ 角平分</button>
+        </div>
+        <div class="group">
+            <button id="btn-toggle-angles" onclick="toggleAngles()" title="全局显示/隐藏交点角度">📐 角度</button>
+        </div>
+        <div class="group">
+            <button id="btn-undo" onclick="undo()" disabled>↩️</button>
+            <button id="btn-redo" onclick="redo()" disabled>↪️</button>
+            <button onclick="clearCanvas()" class="danger">🗑️</button>
+        </div>
+        <div class="group">
+            <button onclick="exportImage()">📷 导出</button>
+        </div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="drawingBoard"></canvas>
+        <div id="context-menu">
+            <div id="cm-hide-label" onclick="toggleLabelVisibility()">👁️ 隐藏标签</div>
+            <div class="delete" onclick="deleteSelectedShape()">🗑️ 删除对象</div>
+        </div>
+        <div class="tooltip" id="hover-tooltip"></div>
+    </div>
+
+    <div class="status-bar">
+        <span id="status-text">准备就绪 - 请选择工具开始绘图</span>
+        <span id="coords-text">X: 0, Y: 0 | 100%</span>
+    </div>
+</div>
+
+<script>
+// ==================== 应用状态与路由系统 ====================
+
+const TOOL_META = {
+    pan: "抓手",
+    label: "命名",
+    point: "点",
+    line: "直线",
+    circle: "圆",
+    midpoint: "中点",
+    perp: "垂线",
+    parallel: "平行线",
+    perpBisector: "垂直平分",
+    angleBisector: "角平分"
+};
+
+const LEVELS = [
+    {
+        id: 1,
+        stage: 1,
+        chapter: "第一章 圆与线",
+        icon: "△",
+        title: "万物起源：等边三角形",
+        desc: "只用圆和直线，作出一个等边三角形。",
+        focus: "学习重点：半径相等会自动确定第三个顶点。",
+        success: "🎉 恭喜通关！\n你已经利用圆的半径相等关系构造出了等边三角形。\n这是一切尺规作图的起点。",
+        hint: "🤔 还差一点。\n【老师的提示】：先画一条线段，再分别以两个端点为圆心、线段长为半径画圆，最后连接圆的交点。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle']
+    },
+    {
+        id: 2,
+        stage: 1,
+        chapter: "第一章 圆与线",
+        icon: "⚡",
+        title: "平分秋色：中垂线",
+        desc: "作出一条线段的垂直平分线。",
+        focus: "学习重点：抓住“到线段两端点距离相等”的轨迹。",
+        success: "🎉 恭喜通关！\n你已经作出了线段的垂直平分线。\n这条线上每一点，到两端点的距离都相等。",
+        hint: "🤔 还差一点。\n【老师的提示】：还是从两个端点画等半径圆开始，连接两个交点，就会得到中垂线。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle']
+    },
+    {
+        id: 3,
+        stage: 1,
+        chapter: "第一章 圆与线",
+        icon: "◎",
+        title: "双环回声：同心双圆",
+        desc: "以同一个圆心，作出两个半径不同的圆。",
+        focus: "学习重点：圆心保持不变，半径可以自由变化。",
+        success: "🎉 恭喜通关！\n你已经掌握了“同心”的概念。\n后面的组合构型里，圆心会反复出现。",
+        hint: "🤔 还没有形成同心双圆。\n【老师的提示】：先固定一个圆心，再从这个圆心出发分别选取两个不同半径画圆。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle']
+    },
+    {
+        id: 4,
+        stage: 2,
+        chapter: "第二章 垂线与角",
+        icon: "M",
+        title: "恰到好处：找出中点",
+        desc: "在线段上构造一个真正的中点。",
+        focus: "学习重点：中点需要同时满足共线与等距。",
+        success: "🎉 恭喜通关！\n你已经找到了真正的中点。\n中点是很多作图关系的隐藏核心。",
+        hint: "🤔 这个点还不是中点。\n【老师的提示】：要同时满足“在线段上”以及“到两端点距离相等”这两个条件。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint']
+    },
+    {
+        id: 5,
+        stage: 2,
+        chapter: "第二章 垂线与角",
+        icon: "⊥",
+        title: "直角降临：过点作垂线",
+        desc: "过线外一点，作出已知直线的垂线。",
+        focus: "学习重点：过点、定向、再验证 90°。",
+        success: "🎉 恭喜通关！\n你已经过点作出了垂线。\n直角结构从这里开始真正稳定下来。",
+        hint: "🤔 直角还没有真正出现。\n【老师的提示】：先保证有一个在线外的点，再让新线与基准线夹角为 90°。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint', 'perpBisector', 'perp']
+    },
+    {
+        id: 6,
+        stage: 2,
+        chapter: "第二章 垂线与角",
+        icon: "∠",
+        title: "劈裂者：角平分线",
+        desc: "作出一个任意角的角平分线。",
+        focus: "学习重点：让新线与角的两边形成相同夹角。",
+        success: "🎉 恭喜通关！\n你已经成功平分了一个角。\n角平分线是很多几何证明题的高频结构。",
+        hint: "🤔 角还没有被真正平分。\n【老师的提示】：先在角的两边取点，再找到到这两个点距离相等的点，连接顶点。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint', 'perpBisector', 'angleBisector', 'perp']
+    },
+    {
+        id: 7,
+        stage: 3,
+        chapter: "第三章 平行与结构",
+        icon: "45°",
+        title: "特殊角：45度的诞生",
+        desc: "构造一个精准的 45° 角。",
+        focus: "学习重点：直角的一半，就是 45°。",
+        success: "🎉 恭喜通关！\n你已经构造出了一个 45° 角。\n特殊角之间的组合，是复杂图形的通行证。",
+        hint: "🤔 这个角还不是 45°。\n【老师的提示】：可以先作一个 90° 角，再把它平分。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint', 'perpBisector', 'angleBisector', 'perp']
+    },
+    {
+        id: 8,
+        stage: 3,
+        chapter: "第三章 平行与结构",
+        icon: "∥",
+        title: "平行世界：过点作平行线",
+        desc: "过直线外一点，作出已知直线的平行线。",
+        focus: "学习重点：方向相同，永不相交。",
+        success: "🎉 恭喜通关！\n你已经过直线外一点作出了平行线。\n平行关系已经正式加入你的作图工具箱。",
+        hint: "🤔 这两条线还不满足要求。\n【老师的提示】：先作垂线，再对垂线作垂线；或者直接使用平行线工具。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint', 'perpBisector', 'angleBisector', 'perp', 'parallel']
+    },
+    {
+        id: 9,
+        stage: 4,
+        chapter: "第四章 组合挑战",
+        icon: "▭",
+        title: "矩形要塞：四线围城",
+        desc: "使用四条直线围出一个矩形。",
+        focus: "学习重点：两组对边平行，相邻边互相垂直。",
+        success: "🎉 恭喜通关！\n你已经把平行与垂直组合成了矩形。\n从这一关开始，你在构造完整图形，而不只是单一关系。",
+        hint: "🤔 还没有形成矩形结构。\n【老师的提示】：先做出一组平行线，再做出与它们垂直的另一组平行线。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint', 'perpBisector', 'angleBisector', 'perp', 'parallel']
+    },
+    {
+        id: 10,
+        stage: 4,
+        chapter: "第四章 组合挑战",
+        icon: "□",
+        title: "正方神殿：四边等长",
+        desc: "构造一个正方形。",
+        focus: "学习重点：先有矩形，再让相邻边等长。",
+        success: "🎉 恭喜通关！\n你已经完成了正方形构造。\n至此，从基础关系到组合图形，这条教学路线已经闭环。",
+        hint: "🤔 这还不是正方形。\n【老师的提示】：正方形既是矩形，又要求相邻边等长。先保证直角和平行，再调整边长关系。",
+        allowedTools: ['pan', 'label', 'point', 'line', 'circle', 'midpoint', 'perpBisector', 'angleBisector', 'perp', 'parallel']
+    }
+];
+
+let currentAppMode = 'home';
+let currentLevelId = 1;
+let unlockedLevel = Math.min(Math.max(parseInt(localStorage.getItem('xiaozhi_save_progress')) || 1, 1), LEVELS.length + 1);
+
+function getLevelData(levelId = currentLevelId) {
+    return LEVELS.find(level => level.id === levelId);
+}
+
+function getCompletedLevelCount() {
+    return Math.min(Math.max(unlockedLevel - 1, 0), LEVELS.length);
+}
+
+function getUnlockedToolCount() {
+    const toolSet = new Set();
+    LEVELS.filter(level => level.id < unlockedLevel).forEach(level => {
+        level.allowedTools.forEach(tool => toolSet.add(tool));
+    });
+    if (toolSet.size === 0) {
+        LEVELS[0].allowedTools.forEach(tool => toolSet.add(tool));
+    }
+    return toolSet.size;
+}
+
+function renderToolChips(toolIds, className = 'tool-chip', limit = 6) {
+    const visibleTools = toolIds.filter(tool => tool !== 'pan' && tool !== 'label');
+    const chips = visibleTools.slice(0, limit).map(tool => `<span class="${className}">${TOOL_META[tool] || tool}</span>`);
+    if (visibleTools.length > limit) {
+        chips.push(`<span class="${className}">+${visibleTools.length - limit}</span>`);
+    }
+    return chips.join('');
+}
+
+function formatToday() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `日期 ${yyyy}-${mm}-${dd}`;
+}
+
+function refreshWorkspaceDate() {
+    document.getElementById('workspace-date').textContent = formatToday();
+}
+
+function renderHomeOverview() {
+    const completed = getCompletedLevelCount();
+    const nextLevel = completed >= LEVELS.length ? null : LEVELS.find(level => level.id === unlockedLevel);
+    document.getElementById('home-finished-count').textContent = `${completed} / ${LEVELS.length}`;
+    document.getElementById('home-next-level').textContent = nextLevel ? `关卡 ${nextLevel.id}` : '全部通关';
+    document.getElementById('home-tool-count').textContent = `${getUnlockedToolCount()} 个`;
+}
+
+function renderCampaignOverview() {
+    const completed = getCompletedLevelCount();
+    const total = LEVELS.length;
+    const nextLevel = completed >= total ? null : LEVELS.find(level => level.id === unlockedLevel);
+    document.getElementById('campaign-progress-text').textContent = completed === total
+        ? `已完成 ${completed} / ${total} 关，你已经通关整条教学路线。`
+        : `已完成 ${completed} / ${total} 关，继续向前推进。`;
+    document.getElementById('campaign-progress-fill').style.width = `${(completed / total) * 100}%`;
+    document.getElementById('campaign-next-goal').textContent = nextLevel ? `下一关：关卡 ${nextLevel.id}` : '下一关：已全部完成';
+    document.getElementById('campaign-tools-count').textContent = `已解锁工具：${getUnlockedToolCount()} 个`;
+}
+
+function switchScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(screenId).classList.remove('hidden');
+    if (screenId === 'screen-home') renderHomeOverview();
+    if (screenId === 'screen-levels') renderCampaignOverview();
+    if (screenId === 'screen-workspace') {
+        refreshWorkspaceDate();
+        setTimeout(() => { resizeCanvas(); centerOrigin(); }, 50);
+    }
+}
+
+function enterSandbox() {
+    currentAppMode = 'sandbox';
+    document.getElementById('workspace-title').textContent = '🎨 自由探索';
+    document.getElementById('workspace-subtitle').textContent = '全部工具已解锁，适合自由实验、推演与临摹';
+    document.getElementById('workspace-stage').textContent = '自由模式';
+    document.getElementById('task-panel').classList.add('hidden');
+    document.querySelectorAll('.adv-tool').forEach(el => el.classList.remove('tool-hidden'));
+    clearCanvasSilently();
+    switchScreen('screen-workspace');
+}
+
+function enterCampaign() {
+    currentAppMode = 'campaign';
+    renderLevelGrid();
+    switchScreen('screen-levels');
+}
+
+function renderLevelGrid() {
+    const grid = document.getElementById('level-grid');
+    grid.innerHTML = '';
+    LEVELS.forEach(level => {
+        const isUnlocked = level.id <= unlockedLevel;
+        const isPassed = level.id < unlockedLevel;
+        const btn = document.createElement('div');
+        const stateLabel = isPassed ? '已完成' : (isUnlocked ? '可挑战' : '未解锁');
+
+        btn.className = `level-btn ${isUnlocked ? 'unlocked' : 'locked'} ${isPassed ? 'passed' : ''}`;
+        btn.dataset.stage = String(level.stage);
+        btn.innerHTML = `
+            <div class="level-top">
+                <span class="level-stage">${level.chapter}</span>
+                <span class="level-state">${stateLabel}</span>
+            </div>
+            <span class="level-icon">${isPassed ? '✅' : (isUnlocked ? level.icon : '🔒')}</span>
+            <span class="level-id">关卡 ${level.id}</span>
+            <h4 class="level-title">${level.title}</h4>
+            <p class="level-desc">${level.desc}</p>
+            <p class="level-focus">${level.focus}</p>
+            <div class="level-tools">${renderToolChips(level.allowedTools)}</div>
+        `;
+        if (isUnlocked) btn.onclick = () => loadLevel(level.id);
+        grid.appendChild(btn);
+    });
+    renderCampaignOverview();
+    renderHomeOverview();
+}
+
+function loadLevel(levelId) {
+    currentLevelId = levelId;
+    const levelData = getLevelData(levelId);
+    document.getElementById('workspace-title').textContent = `🏆 关卡 ${levelId} · ${levelData.title}`;
+    document.getElementById('workspace-subtitle').textContent = levelData.focus;
+    document.getElementById('workspace-stage').textContent = levelData.chapter;
+    document.getElementById('task-kicker').textContent = `第 ${levelId} 关 · ${levelData.chapter}`;
+    document.getElementById('task-title').textContent = levelData.title;
+    document.getElementById('task-desc').textContent = levelData.desc;
+    document.getElementById('task-meta').textContent = levelData.focus;
+    document.getElementById('task-tools').innerHTML = renderToolChips(levelData.allowedTools, 'task-tool-chip', 8);
+    document.getElementById('task-panel').classList.remove('hidden');
+
+    document.querySelectorAll('.adv-tool').forEach(el => {
+        if (levelData.allowedTools.includes(el.getAttribute('data-tool'))) {
+            el.classList.remove('tool-hidden');
+        } else {
+            el.classList.add('tool-hidden');
+        }
+    });
+
+    clearCanvasSilently();
+    switchScreen('screen-workspace');
+}
+
+function exitWorkspace() {
+    if (currentAppMode === 'campaign') {
+        renderLevelGrid();
+        switchScreen('screen-levels');
+    } else {
+        switchScreen('screen-home');
+    }
+}
+
+function resetProgress() {
+    if (confirm('确定要清除所有通关记录重新开始吗？')) {
+        unlockedLevel = 1;
+        localStorage.setItem('xiaozhi_save_progress', 1);
+        renderLevelGrid();
+        renderCampaignOverview();
+        renderHomeOverview();
+    }
+}
+
+function clearCanvasSilently() {
+    shapes = [];
+    historyStack = [];
+    redoStack = [];
+    resetTempState();
+    if(ctx) redraw();
+}
+
+// ==================== 智能判题引擎 ====================
+
+function checkTask() {
+    const levelData = getLevelData();
+    const checker = LEVEL_CHECKERS[currentLevelId];
+    if (!checker || !levelData) {
+        alert("暂不支持这一关的判题。");
+        return;
+    }
+
+    const isPassed = checker();
+    if (isPassed) {
+        alert(levelData.success || "🎉 恭喜通关！判定成功！");
+        if (unlockedLevel === currentLevelId) {
+            unlockedLevel = Math.min(unlockedLevel + 1, LEVELS.length + 1);
+            localStorage.setItem('xiaozhi_save_progress', unlockedLevel);
+        }
+        renderHomeOverview();
+        renderCampaignOverview();
+        exitWorkspace();
+    } else {
+        alert(levelData.hint || "图形还不够准确，再尝试一下！");
+    }
+}
+
+function checkLevel1() {
+    const lines = shapes.filter(s => s.type === 'line');
+    if (lines.length < 3) return false;
+    for (let i = 0; i < lines.length - 2; i++) {
+        for (let j = i + 1; j < lines.length - 1; j++) {
+            for (let k = j + 1; k < lines.length; k++) {
+                const p1 = getLineIntersection(lines[i], lines[j]);
+                const p2 = getLineIntersection(lines[j], lines[k]);
+                const p3 = getLineIntersection(lines[k], lines[i]);
+                if (p1 && p2 && p3) {
+                    const d12 = dist(p1, p2), d23 = dist(p2, p3), d31 = dist(p3, p1);
+                    if (d12 > 10 && d23 > 10 && d31 > 10) {
+                        const avgLen = (d12 + d23 + d31) / 3;
+                        const tol = 3.0; 
+                        if (Math.abs(d12 - avgLen) < tol && Math.abs(d23 - avgLen) < tol && Math.abs(d31 - avgLen) < tol) {
+                            return true; 
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel2() {
+    const lines = shapes.filter(s => s.type === 'line');
+    const points = shapes.filter(s => s.type === 'point');
+    if (lines.length < 2 || points.length < 2) return false;
+
+    for (let i = 0; i < points.length - 1; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+            const A = points[i], B = points[j];
+            if (dist(A, B) < MIN_JUDGE_LENGTH) continue;
+            const midpoint = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+
+            for (let baseLine of lines) {
+                if (!isPointOnInfiniteLine(A, baseLine) || !isPointOnInfiniteLine(B, baseLine)) continue;
+
+                for (let candidate of lines) {
+                    if (candidate === baseLine) continue;
+                    if (areLinesPerpendicular(baseLine, candidate) && isPointOnInfiniteLine(midpoint, candidate)) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel3() {
+    const circles = shapes.filter(s => s.type === 'circle');
+    if (circles.length < 2) return false;
+
+    for (let i = 0; i < circles.length - 1; i++) {
+        for (let j = i + 1; j < circles.length; j++) {
+            if (dist(circles[i], circles[j]) <= JUDGE_DISTANCE_TOLERANCE && Math.abs(circles[i].r - circles[j].r) > JUDGE_DISTANCE_TOLERANCE) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel4() {
+    const points = shapes.filter(s => s.type === 'point');
+    if (points.length < 3) return false;
+
+    for (let i = 0; i < points.length; i++) {
+        for (let j = 0; j < points.length; j++) {
+            if (j === i) continue;
+            for (let k = j + 1; k < points.length; k++) {
+                if (k === i) continue;
+                const M = points[i], A = points[j], B = points[k];
+                if (dist(A, B) < MIN_JUDGE_LENGTH) continue;
+                if (!arePointsCollinear(A, M, B)) continue;
+                if (Math.abs(dist(A, M) - dist(M, B)) <= JUDGE_DISTANCE_TOLERANCE && dist(A, M) > MIN_JUDGE_LENGTH / 3) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel5() {
+    const lines = shapes.filter(s => s.type === 'line');
+    const points = shapes.filter(s => s.type === 'point');
+    if (lines.length < 2 || points.length < 1) return false;
+
+    for (let i = 0; i < lines.length - 1; i++) {
+        for (let j = i + 1; j < lines.length; j++) {
+            if (!areLinesPerpendicular(lines[i], lines[j])) continue;
+
+            for (let point of points) {
+                const onLine1 = isPointOnInfiniteLine(point, lines[i]);
+                const onLine2 = isPointOnInfiniteLine(point, lines[j]);
+                if (onLine1 !== onLine2) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel6() {
+    const lines = shapes.filter(s => s.type === 'line');
+    if (lines.length < 3) return false;
+
+    for (let b = 0; b < lines.length; b++) {
+        const bisector = lines[b];
+        for (let i = 0; i < lines.length - 1; i++) {
+            if (i === b) continue;
+            for (let j = i + 1; j < lines.length; j++) {
+                if (j === b) continue;
+                const side1 = lines[i], side2 = lines[j];
+                const vertex = getLineIntersection(side1, side2);
+                const meet1 = getLineIntersection(side1, bisector);
+                const meet2 = getLineIntersection(side2, bisector);
+                if (!vertex || !meet1 || !meet2) continue;
+                if (dist(vertex, meet1) > JUDGE_DISTANCE_TOLERANCE || dist(vertex, meet2) > JUDGE_DISTANCE_TOLERANCE) continue;
+
+                const sideAngle = getLineAngleDegrees(side1, side2);
+                const angle1 = getLineAngleDegrees(side1, bisector);
+                const angle2 = getLineAngleDegrees(side2, bisector);
+                if (sideAngle === null || angle1 === null || angle2 === null) continue;
+                if (sideAngle < 10 || angle1 < 5 || angle2 < 5) continue;
+
+                if (Math.abs(angle1 - angle2) <= JUDGE_ANGLE_TOLERANCE) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel7() {
+    const lines = shapes.filter(s => s.type === 'line');
+    if (lines.length < 2) return false;
+
+    for (let i = 0; i < lines.length - 1; i++) {
+        for (let j = i + 1; j < lines.length; j++) {
+            const angle = getLineAngleDegrees(lines[i], lines[j]);
+            if (angle !== null && Math.abs(angle - 45) <= JUDGE_ANGLE_TOLERANCE) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel8() {
+    const lines = shapes.filter(s => s.type === 'line');
+    const points = shapes.filter(s => s.type === 'point');
+    if (lines.length < 2 || points.length < 1) return false;
+
+    for (let i = 0; i < lines.length - 1; i++) {
+        for (let j = i + 1; j < lines.length; j++) {
+            const line1 = lines[i], line2 = lines[j];
+            if (!areLinesParallel(line1, line2) || areCoincidentLines(line1, line2)) continue;
+
+            for (let point of points) {
+                const onLine1 = isPointOnInfiniteLine(point, line1);
+                const onLine2 = isPointOnInfiniteLine(point, line2);
+                if (onLine1 !== onLine2) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+function checkLevel9() {
+    return hasOrderedParallelQuadrilateral(data => areLinesPerpendicular(data.l1, data.l2));
+}
+
+function checkLevel10() {
+    return hasOrderedParallelQuadrilateral(data =>
+        areLinesPerpendicular(data.l1, data.l2) &&
+        Math.abs(data.ab - data.bc) <= SIDE_TOLERANCE &&
+        Math.abs(data.bc - data.cd) <= SIDE_TOLERANCE &&
+        Math.abs(data.cd - data.da) <= SIDE_TOLERANCE
+    );
+}
+
+const LEVEL_CHECKERS = {
+    1: checkLevel1,
+    2: checkLevel2,
+    3: checkLevel3,
+    4: checkLevel4,
+    5: checkLevel5,
+    6: checkLevel6,
+    7: checkLevel7,
+    8: checkLevel8,
+    9: checkLevel9,
+    10: checkLevel10
+};
+
+// ==================== 核心绘图系统 ====================
+
+const canvas = document.getElementById('drawingBoard');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('canvas-container');
+const statusText = document.getElementById('status-text');
+const coordsText = document.getElementById('coords-text');
+const contextMenu = document.getElementById('context-menu');
+const tooltip = document.getElementById('hover-tooltip');
+
+let shapes = [];
+let historyStack = [];
+let redoStack = [];
+
+let currentMode = 'pan';
+let offsetX = 0, offsetY = 0;
+let scale = 1.0;
+let showGrid = true;
+let showAngles = false;
+
+let isDragging = false;
+let lastMouseX = 0, lastMouseY = 0;
+
+let tempPoints = []; 
+let rightClickedShape = null; 
+
+let hoverPoint = null;
+let hoverIntersection = null;
+let hoverPath = null;
+let hoverLineObject = null;
+
+const SNAP_THRESHOLD = 10;
+const MERGE_THRESHOLD = 1e-4;
+const MIN_SCALE = 0.1;
+const MAX_SCALE = 50.0;
+const ANGLE_TOLERANCE = 1.5;
+const JUDGE_DISTANCE_TOLERANCE = 2.0;
+const JUDGE_ANGLE_TOLERANCE = 2.0;
+const MIN_JUDGE_LENGTH = 10;
+const MIN_POLYGON_SIDE_LENGTH = 6;
+const SIDE_TOLERANCE = 3.0;
+
+const ANGLE_COLORS = { 30: '#52c41a', 45: '#722ed1', 60: '#fa8c16', 90: '#ff4d4f' };
+
+function resizeCanvas() { canvas.width = container.clientWidth; canvas.height = container.clientHeight; redraw(); }
+window.addEventListener('resize', resizeCanvas);
+setTimeout(() => { resizeCanvas(); centerOrigin(); }, 10);
+
+function centerOrigin() { offsetX = canvas.width / 2; offsetY = canvas.height / 2; redraw(); }
+function resetView() { scale = 1.0; centerOrigin(); statusText.textContent = "视图已复位"; }
+function toggleGrid() { showGrid = !showGrid; redraw(); }
+
+function toggleAngles() {
+    showAngles = !showAngles;
+    const btn = document.getElementById('btn-toggle-angles');
+    if (btn) {
+        btn.textContent = showAngles ? '📐 隐藏角度' : '📐 显示角度';
+        if (showAngles) btn.classList.add('active'); else btn.classList.remove('active');
+    }
+    redraw();
+}
+
+function clearCanvas() {
+    if(confirm("确定要清空画布吗？")) { saveState(); clearCanvasSilently(); }
+}
+
+// 采用瞬间渲染的无损导出截取法
+function exportImage() {
+    if (shapes.length === 0) { alert("画布为空，没有可导出的图形！"); return; }
+    statusText.textContent = "正在计算图形边界并导出...";
+    let boundingPts = [];
+    shapes.forEach(s => {
+        if (s.type === 'point') { boundingPts.push({x: s.x, y: s.y}); } 
+        else if (s.type === 'line') { boundingPts.push({x: s.x1, y: s.y1}); boundingPts.push({x: s.x2, y: s.y2}); } 
+        else if (s.type === 'circle') {
+            boundingPts.push({x: s.x - s.r, y: s.y - s.r}); boundingPts.push({x: s.x + s.r, y: s.y + s.r});
+            boundingPts.push({x: s.x - s.r, y: s.y + s.r}); boundingPts.push({x: s.x + s.r, y: s.y - s.r});
+        }
+    });
+
+    for (let i = 0; i < shapes.length; i++) {
+        for (let j = i + 1; j < shapes.length; j++) {
+            const s1 = shapes[i], s2 = shapes[j];
+            if(s1.type === 'point' || s2.type === 'point') continue;
+            let pts = [];
+            if (s1.type === 'line' && s2.type === 'line') { const p = getLineIntersection(s1, s2); if(p) pts.push(p); }
+            else if (s1.type === 'line' && s2.type === 'circle') pts = getLineCircleIntersection(s1, s2);
+            else if (s1.type === 'circle' && s2.type === 'line') pts = getLineCircleIntersection(s2, s1);
+            else if (s1.type === 'circle' && s2.type === 'circle') pts = getCircleCircleIntersection(s1, s2);
+            boundingPts.push(...pts);
+        }
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    boundingPts.forEach(p => {
+        minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+    });
+
+    if (maxX - minX < 1) { minX -= 50; maxX += 50; }
+    if (maxY - minY < 1) { minY -= 50; maxY += 50; }
+
+    const padding = 100;
+    const logicalWidth = (maxX - minX) + padding * 2;
+    const logicalHeight = (maxY - minY) + padding * 2;
+    const exportScale = 2.0; 
+
+    const realW = canvas.width; const realH = canvas.height;
+    const realOffsetX = offsetX; const realOffsetY = offsetY;
+    const realScale = scale; const realShowGrid = showGrid;
+
+    showGrid = false; 
+    scale = exportScale;
+    offsetX = -(minX - padding) * exportScale; offsetY = -(minY - padding) * exportScale;
+    canvas.width = logicalWidth * exportScale; canvas.height = logicalHeight * exportScale;
+    redraw();
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+    const tCtx = tempCanvas.getContext('2d');
+    tCtx.fillStyle = '#ffffff'; tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    tCtx.drawImage(canvas, 0, 0);
+
+    canvas.width = realW; canvas.height = realH;
+    offsetX = realOffsetX; offsetY = realOffsetY;
+    scale = realScale; showGrid = realShowGrid;
+    redraw();
+
+    tempCanvas.toBlob(function(blob) {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a'); link.download = `小智几何作图_${new Date().getTime()}.png`;
+        link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
+        statusText.textContent = "图片导出成功！";
+    }, 'image/png');
+}
+
+function toLogical(screenX, screenY) { return { x: (screenX - offsetX) / scale, y: (screenY - offsetY) / scale }; }
+function toScreen(logicalX, logicalY) { return { x: logicalX * scale + offsetX, y: logicalY * scale + offsetY }; }
+function dist(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
+
+function getLineIntersection(l1, l2) {
+    const det = (l1.x1 - l1.x2) * (l2.y1 - l2.y2) - (l1.y1 - l1.y2) * (l2.x1 - l2.x2);
+    if (det === 0) return null;
+    const t = ((l1.x1 - l2.x1) * (l2.y1 - l2.y2) - (l1.y1 - l2.y1) * (l2.x1 - l2.x2)) / det;
+    return { x: l1.x1 + t * (l1.x2 - l1.x1), y: l1.y1 + t * (l1.y2 - l1.y1) };
+}
+
+function getLineCircleIntersection(line, circle) {
+    const dx = line.x2 - line.x1, dy = line.y2 - line.y1;
+    const fx = line.x1 - circle.x, fy = line.y1 - circle.y;
+    const a = dx * dx + dy * dy; const b = 2 * (fx * dx + fy * dy); const c = (fx * fx + fy * fy) - circle.r * circle.r;
+    let delta = b * b - 4 * a * c;
+    if (delta < 0) return [];
+    delta = Math.sqrt(delta);
+    const t1 = (-b - delta) / (2 * a), t2 = (-b + delta) / (2 * a);
+    const res = [{ x: line.x1 + t1 * dx, y: line.y1 + t1 * dy }];
+    if (delta > 1e-9) res.push({ x: line.x1 + t2 * dx, y: line.y1 + t2 * dy });
+    return res;
+}
+
+function getCircleCircleIntersection(c1, c2) {
+    const d = dist(c1, c2);
+    if (d > c1.r + c2.r || d < Math.abs(c1.r - c2.r) || d === 0) return [];
+    const a = (c1.r * c1.r - c2.r * c2.r + d * d) / (2 * d);
+    const h = Math.sqrt(Math.max(0, c1.r * c1.r - a * a));
+    const x2 = c1.x + a * (c2.x - c1.x) / d; const y2 = c1.y + a * (c2.y - c1.y) / d;
+    return [ { x: x2 + h * (c2.y - c1.y) / d, y: y2 - h * (c2.x - c1.x) / d }, { x: x2 - h * (c2.y - c1.y) / d, y: y2 + h * (c2.x - c1.x) / d } ];
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function getLineAngleDegrees(line1, line2) {
+    const dx1 = line1.x2 - line1.x1, dy1 = line1.y2 - line1.y1;
+    const dx2 = line2.x2 - line2.x1, dy2 = line2.y2 - line2.y1;
+    const len1 = Math.hypot(dx1, dy1), len2 = Math.hypot(dx2, dy2);
+    if (len1 < MERGE_THRESHOLD || len2 < MERGE_THRESHOLD) return null;
+
+    const cosValue = clamp(Math.abs((dx1 * dx2 + dy1 * dy2) / (len1 * len2)), -1, 1);
+    return Math.acos(cosValue) * 180 / Math.PI;
+}
+
+function getPointLineDistance(point, line) {
+    const dx = line.x2 - line.x1, dy = line.y2 - line.y1;
+    const len = Math.hypot(dx, dy);
+    if (len < MERGE_THRESHOLD) return Infinity;
+    return Math.abs(dy * point.x - dx * point.y + line.x2 * line.y1 - line.y2 * line.x1) / len;
+}
+
+function isPointOnInfiniteLine(point, line, tolerance = JUDGE_DISTANCE_TOLERANCE) {
+    return getPointLineDistance(point, line) <= tolerance;
+}
+
+function areLinesParallel(line1, line2, angleTolerance = JUDGE_ANGLE_TOLERANCE) {
+    const angle = getLineAngleDegrees(line1, line2);
+    return angle !== null && angle <= angleTolerance;
+}
+
+function areLinesPerpendicular(line1, line2, angleTolerance = JUDGE_ANGLE_TOLERANCE) {
+    const angle = getLineAngleDegrees(line1, line2);
+    return angle !== null && Math.abs(angle - 90) <= angleTolerance;
+}
+
+function areCoincidentLines(line1, line2, tolerance = JUDGE_DISTANCE_TOLERANCE) {
+    return areLinesParallel(line1, line2) &&
+        isPointOnInfiniteLine({ x: line1.x1, y: line1.y1 }, line2, tolerance) &&
+        isPointOnInfiniteLine({ x: line2.x1, y: line2.y1 }, line1, tolerance);
+}
+
+function arePointsCollinear(p1, p2, p3, tolerance = JUDGE_DISTANCE_TOLERANCE) {
+    const base = dist(p1, p3);
+    if (base < MERGE_THRESHOLD) return false;
+    return Math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p2.y - p1.y) * (p3.x - p1.x)) / base <= tolerance;
+}
+
+function areDistinctPoints(points, minDistance = MIN_JUDGE_LENGTH / 2) {
+    for (let i = 0; i < points.length - 1; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+            if (dist(points[i], points[j]) < minDistance) return false;
+        }
+    }
+    return true;
+}
+
+function hasOrderedParallelQuadrilateral(predicate) {
+    const lines = shapes.filter(s => s.type === 'line');
+    if (lines.length < 4) return false;
+
+    for (let a = 0; a < lines.length; a++) {
+        for (let b = 0; b < lines.length; b++) {
+            if (b === a) continue;
+            for (let c = 0; c < lines.length; c++) {
+                if (c === a || c === b) continue;
+                for (let d = 0; d < lines.length; d++) {
+                    if (d === a || d === b || d === c) continue;
+
+                    const l1 = lines[a], l2 = lines[b], l3 = lines[c], l4 = lines[d];
+                    if (!areLinesParallel(l1, l3) || !areLinesParallel(l2, l4)) continue;
+                    if (areCoincidentLines(l1, l3) || areCoincidentLines(l2, l4)) continue;
+
+                    const A = getLineIntersection(l1, l2);
+                    const B = getLineIntersection(l2, l3);
+                    const C = getLineIntersection(l3, l4);
+                    const D = getLineIntersection(l4, l1);
+                    if (!A || !B || !C || !D) continue;
+                    if (!areDistinctPoints([A, B, C, D])) continue;
+
+                    const ab = dist(A, B), bc = dist(B, C), cd = dist(C, D), da = dist(D, A);
+                    if (Math.min(ab, bc, cd, da) < MIN_POLYGON_SIDE_LENGTH) continue;
+
+                    if (predicate({ l1, l2, l3, l4, A, B, C, D, ab, bc, cd, da })) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
+function findExistingPoint(x, y) {
+    const threshold = SNAP_THRESHOLD / scale; let best = null, minDist = Infinity;
+    for (let s of shapes) {
+        if (s.type === 'point') { const d = dist({x, y}, s); if (d <= threshold && d < minDist) { minDist = d; best = s; } }
+    }
+    return best;
+}
+
+function findLineAt(x, y) {
+    const threshold = SNAP_THRESHOLD / scale; let best = null, minDist = Infinity;
+    for (let s of shapes) {
+        if (s.type === 'line') {
+            const A = {x: s.x1, y: s.y1}, B = {x: s.x2, y: s.y2}, P = {x, y};
+            const AB = {x: B.x - A.x, y: B.y - A.y}, AP = {x: P.x - A.x, y: P.y - A.y};
+            const len2 = AB.x*AB.x + AB.y*AB.y;
+            let t = (AP.x*AB.x + AP.y*AB.y) / len2; t = Math.max(0, Math.min(1, t));
+            const closest = {x: A.x + t*AB.x, y: A.y + t*AB.y};
+            const d = dist(P, closest); if (d <= threshold && d < minDist) { minDist = d; best = s; }
+        }
+    }
+    return best;
+}
+
+function findCircleAt(x, y) {
+    const threshold = SNAP_THRESHOLD / scale;
+    for (let s of shapes) { if (s.type === 'circle') { const d = Math.abs(dist({x, y}, s) - s.r); if (d <= threshold) return s; } }
+    return null;
+}
+
+function findIntersection(x, y) {
+    const threshold = SNAP_THRESHOLD / scale; let best = null, minDist = Infinity;
+    for (let i = 0; i < shapes.length; i++) {
+        for (let j = i + 1; j < shapes.length; j++) {
+            const s1 = shapes[i], s2 = shapes[j];
+            if(s1.type === 'point' || s2.type === 'point') continue;
+            let pts = [];
+            if (s1.type === 'line' && s2.type === 'line') { const p = getLineIntersection(s1, s2); if(p) pts.push(p); }
+            else if (s1.type === 'line' && s2.type === 'circle') pts = getLineCircleIntersection(s1, s2);
+            else if (s1.type === 'circle' && s2.type === 'line') pts = getLineCircleIntersection(s2, s1);
+            else if (s1.type === 'circle' && s2.type === 'circle') pts = getCircleCircleIntersection(s1, s2);
+            for (let p of pts) {
+                if (shapes.some(s => s.type === 'point' && dist(s, p) < MERGE_THRESHOLD)) continue;
+                const d = dist({x, y}, p); if (d <= threshold && d < minDist) { minDist = d; best = p; }
+            }
+        }
+    }
+    return best;
+}
+
+function findPointOnShape(x, y) {
+    const threshold = SNAP_THRESHOLD / scale; let best = null, minDist = Infinity;
+    for (let s of shapes) {
+        if (s.type === 'point') continue;
+        let closest = null;
+        if (s.type === 'line') {
+            const A = {x: s.x1, y: s.y1}, B = {x: s.x2, y: s.y2}, P = {x, y};
+            const AB = {x: B.x - A.x, y: B.y - A.y}, AP = {x: P.x - A.x, y: P.y - A.y};
+            const t = (AP.x*AB.x + AP.y*AB.y) / (AB.x*AB.x + AB.y*AB.y);
+            closest = {x: A.x + t*AB.x, y: A.y + t*AB.y};
+        } else if (s.type === 'circle') {
+            const angle = Math.atan2(y - s.y, x - s.x);
+            closest = {x: s.x + s.r * Math.cos(angle), y: s.y + s.r * Math.sin(angle)};
+        }
+        if (closest) { const d = dist({x, y}, closest); if (d <= threshold && d < minDist) { minDist = d; best = closest; } }
+    }
+    return best;
+}
+
+function saveState() {
+    historyStack.push(JSON.stringify(shapes));
+    if (historyStack.length > 50) historyStack.shift();
+    redoStack = []; updateUndoRedo();
+}
+function undo() {
+    if (historyStack.length === 0) return;
+    redoStack.push(JSON.stringify(shapes)); shapes = JSON.parse(historyStack.pop());
+    resetTempState(); redraw(); updateUndoRedo();
+}
+function redo() {
+    if (redoStack.length === 0) return;
+    historyStack.push(JSON.stringify(shapes)); shapes = JSON.parse(redoStack.pop());
+    resetTempState(); redraw(); updateUndoRedo();
+}
+function updateUndoRedo() {
+    document.getElementById('btn-undo').disabled = historyStack.length === 0;
+    document.getElementById('btn-redo').disabled = redoStack.length === 0;
+}
+function resetTempState() { tempPoints = []; rightClickedShape = null; contextMenu.style.display = 'none'; }
+
+function setMode(mode) {
+    currentMode = mode; resetTempState();
+    document.querySelectorAll('.toolbar button').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('btn-' + mode)?.classList.add('active');
+    if(showAngles && document.getElementById('btn-toggle-angles')) document.getElementById('btn-toggle-angles').classList.add('active');
+
+    const tips = {
+        'pan': '抓手模式：拖动平移，滚轮缩放，右键管理对象',
+        'label': '命名模式：点击点修改名称',
+        'point': '画点模式：在空白处或交点处点击',
+        'line': '直线工具：点击两点确定直线',
+        'circle': '画圆工具：先点击圆心，再点击圆上一点',
+        'midpoint': '中点工具：依次点击两个点',
+        'perp': '垂线工具：1. 点击经过点 2. 选择基准线',
+        'parallel': '平行线工具：1. 点击经过点 2. 选择基准线',
+        'perpBisector': '垂直平分线：依次点击两个点 (线段端点)',
+        'angleBisector': '角平分线：依次点击三个点 (A-顶点B-C)'
+    };
+    statusText.textContent = tips[mode] || '绘图模式';
+    canvas.style.cursor = (mode === 'pan') ? 'grab' : 'crosshair';
+    redraw();
+}
+
+canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
+    const logicPos = toLogical(mouseX, mouseY);
+    const zoomSpeed = 0.1; const delta = e.deltaY > 0 ? -1 : 1;
+    let newScale = scale * (1 + delta * zoomSpeed); newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+    offsetX = mouseX - logicPos.x * newScale; offsetY = mouseY - logicPos.y * newScale; scale = newScale;
+    redraw(); updateCoords(logicPos.x, logicPos.y);
+}, { passive: false });
+
+canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 2) return; 
+    contextMenu.style.display = 'none'; 
+    const rect = canvas.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
+    const logicPos = toLogical(mouseX, mouseY);
+
+    if (currentMode === 'pan') { isDragging = true; lastMouseX = mouseX; lastMouseY = mouseY; canvas.style.cursor = 'grabbing'; return; }
+    if (currentMode === 'label') {
+        const p = findExistingPoint(logicPos.x, logicPos.y);
+        if (p) { const name = prompt("输入点名称:", p.label || ""); if (name !== null) { saveState(); p.label = name; redraw(); } }
+        return;
+    }
+
+    if ((currentMode === 'perp' || currentMode === 'parallel') && tempPoints.length === 1) {
+        const l = findLineAt(logicPos.x, logicPos.y);
+        if (l) {
+            saveState(); const basePoint = tempPoints[0]; const dx = l.x2 - l.x1; const dy = l.y2 - l.y1;
+            let vecX, vecY; if (currentMode === 'perp') { vecX = -dy; vecY = dx; } else { vecX = dx; vecY = dy; }
+            const len = Math.sqrt(vecX*vecX + vecY*vecY); const scaleLen = 10000;
+            shapes.push({ type: 'line', x1: basePoint.x - (vecX/len)*scaleLen, y1: basePoint.y - (vecY/len)*scaleLen, x2: basePoint.x + (vecX/len)*scaleLen, y2: basePoint.y + (vecY/len)*scaleLen });
+            redraw(); setMode('pan');
+        } else { statusText.textContent = '未选中基准线，请点击一条直线'; }
+        return; 
+    }
+
+    let targetX = logicPos.x, targetY = logicPos.y; let clickedExisting = false;
+    const existing = findExistingPoint(logicPos.x, logicPos.y);
+    const intersection = !existing ? findIntersection(logicPos.x, logicPos.y) : null;
+    const onShape = (!existing && !intersection) ? findPointOnShape(logicPos.x, logicPos.y) : null;
+
+    if (existing) { targetX = existing.x; targetY = existing.y; clickedExisting = true; }
+    else if (intersection) { targetX = intersection.x; targetY = intersection.y; }
+    else if (onShape) { targetX = onShape.x; targetY = onShape.y; }
+    const shouldAddPoint = !clickedExisting && (intersection || onShape);
+
+    if (currentMode === 'point') { saveState(); if (!clickedExisting) shapes.push({ type: 'point', x: targetX, y: targetY }); redraw(); setMode('pan'); }
+    else if (['line', 'circle', 'midpoint', 'perpBisector', 'perp', 'parallel'].includes(currentMode)) {
+        if (tempPoints.length === 0) {
+            tempPoints.push({ x: targetX, y: targetY });
+            if (shouldAddPoint) { saveState(); shapes.push({ type: 'point', x: targetX, y: targetY }); clickedExisting = true; }
+            else if (!clickedExisting) { saveState(); shapes.push({ type: 'point', x: targetX, y: targetY }); }
+            if(currentMode === 'midpoint' || currentMode === 'perpBisector') statusText.textContent = '请点击第二个点';
+            else if(currentMode === 'perp' || currentMode === 'parallel') statusText.textContent = '请选择基准线';
+        } else {
+            saveState();
+            if (!clickedExisting) shapes.push({ type: 'point', x: targetX, y: targetY });
+            const p1 = tempPoints[0]; const p2 = { x: targetX, y: targetY };
+            if (dist(p1, p2) > MERGE_THRESHOLD) {
+                if (currentMode === 'line') shapes.push({ type: 'line', x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y });
+                else if (currentMode === 'circle') shapes.push({ type: 'circle', x: p1.x, y: p1.y, r: dist(p1, p2) });
+                else if (currentMode === 'midpoint') { shapes.push({ type: 'point', x: (p1.x+p2.x)/2, y: (p1.y+p2.y)/2, label: 'M' }); }
+                else if (currentMode === 'perpBisector') {
+                    const midX = (p1.x+p2.x)/2, midY = (p1.y+p2.y)/2; const dx = p2.x - p1.x, dy = p2.y - p1.y; const len = Math.sqrt(dx*dx + dy*dy); const scaleLen = 10000;
+                    shapes.push({ type: 'line', x1: midX - (-dy/len)*scaleLen, y1: midY - (dx/len)*scaleLen, x2: midX + (-dy/len)*scaleLen, y2: midY + (dx/len)*scaleLen });
+                    shapes.push({ type: 'point', x: midX, y: midY, label: 'M' });
+                }
+            }
+            redraw(); setMode('pan');
+        }
+    }
+    else if (currentMode === 'angleBisector') {
+        if (tempPoints.length < 2) {
+            tempPoints.push({ x: targetX, y: targetY });
+            if (!clickedExisting) { saveState(); shapes.push({ type: 'point', x: targetX, y: targetY }); }
+            statusText.textContent = tempPoints.length === 1 ? '请点击顶点 (角的中心)' : '请点击第三个点';
+        } else {
+            saveState();
+            if (!clickedExisting) shapes.push({ type: 'point', x: targetX, y: targetY });
+            const A = tempPoints[0]; const B = tempPoints[1]; const C = { x: targetX, y: targetY };
+            const vBA = { x: A.x - B.x, y: A.y - B.y }; const vBC = { x: C.x - B.x, y: C.y - B.y };
+            const lenBA = Math.sqrt(vBA.x*vBA.x + vBA.y*vBA.y); const lenBC = Math.sqrt(vBC.x*vBC.x + vBC.y*vBC.y);
+            if (lenBA > 0 && lenBC > 0) {
+                const bisectorX = (vBA.x/lenBA) + (vBC.x/lenBC); const bisectorY = (vBA.y/lenBA) + (vBC.y/lenBC);
+                const bLen = Math.sqrt(bisectorX*bisectorX + bisectorY*bisectorY); const scaleLen = 10000;
+                shapes.push({ type: 'line', x1: B.x, y1: B.y, x2: B.x + (bisectorX/bLen)*scaleLen, y2: B.y + (bisectorY/bLen)*scaleLen });
+            }
+            redraw(); setMode('pan');
+        }
+    }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top;
+    const logicPos = toLogical(mouseX, mouseY); updateCoords(logicPos.x, logicPos.y);
+
+    if (currentMode === 'pan') {
+        if (isDragging) { offsetX += mouseX - lastMouseX; offsetY += mouseY - lastMouseY; lastMouseX = mouseX; lastMouseY = mouseY; redraw(); } 
+        else {
+            hoverPoint = findExistingPoint(logicPos.x, logicPos.y); hoverIntersection = !hoverPoint ? findIntersection(logicPos.x, logicPos.y) : null;
+            hoverLineObject = findLineAt(logicPos.x, logicPos.y); const hoverCircle = findCircleAt(logicPos.x, logicPos.y);
+            canvas.style.cursor = (hoverPoint || hoverIntersection || hoverLineObject || hoverCircle) ? 'pointer' : 'grab';
+            if (hoverPoint) showTooltip(e.clientX, e.clientY, `点 ${hoverPoint.label || ''}`);
+            else if (hoverIntersection) showTooltip(e.clientX, e.clientY, "交点");
+            else if (hoverLineObject) showTooltip(e.clientX, e.clientY, "直线");
+            else if (hoverCircle) showTooltip(e.clientX, e.clientY, "圆");
+            else hideTooltip();
+            redraw();
+        }
+        return;
+    }
+
+    hideTooltip();
+    hoverPoint = findExistingPoint(logicPos.x, logicPos.y); hoverIntersection = !hoverPoint ? findIntersection(logicPos.x, logicPos.y) : null;
+    hoverPath = (!hoverPoint && !hoverIntersection) ? findPointOnShape(logicPos.x, logicPos.y) : null;
+
+    if ((currentMode === 'perp' || currentMode === 'parallel') && tempPoints.length === 1) {
+        hoverLineObject = findLineAt(logicPos.x, logicPos.y); canvas.style.cursor = hoverLineObject ? 'pointer' : 'default'; redraw(); return;
+    }
+
+    if (hoverPoint || hoverIntersection || hoverPath) { canvas.style.cursor = 'pointer'; } else { canvas.style.cursor = 'crosshair'; }
+    redraw();
+
+    if (tempPoints.length > 0 && !['perp', 'parallel'].includes(currentMode)) {
+        const lastP = tempPoints[tempPoints.length - 1]; const sStart = toScreen(lastP.x, lastP.y);
+        let finalX = logicPos.x, finalY = logicPos.y;
+        if (hoverPoint) { finalX = hoverPoint.x; finalY = hoverPoint.y; } else if (hoverIntersection) { finalX = hoverIntersection.x; finalY = hoverIntersection.y; } else if (hoverPath) { finalX = hoverPath.x; finalY = hoverPath.y; }
+        const sFinal = toScreen(finalX, finalY);
+        ctx.save(); ctx.strokeStyle = '#999'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.beginPath();
+        if (currentMode === 'circle') { const r = dist(lastP, {x: finalX, y: finalY}) * scale; ctx.arc(sStart.x, sStart.y, r, 0, Math.PI*2); ctx.moveTo(sStart.x, sStart.y); ctx.lineTo(sFinal.x, sFinal.y); } 
+        else { ctx.moveTo(sStart.x, sStart.y); ctx.lineTo(sFinal.x, sFinal.y); }
+        ctx.stroke(); ctx.restore();
+    }
+});
+
+canvas.addEventListener('mouseup', () => { if (currentMode === 'pan') { isDragging = false; canvas.style.cursor = 'grab'; } });
+canvas.addEventListener('mouseleave', () => { isDragging = false; hideTooltip(); });
+
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault(); const rect = canvas.getBoundingClientRect(); const logicPos = toLogical(e.clientX - rect.left, e.clientY - rect.top);
+    rightClickedShape = findExistingPoint(logicPos.x, logicPos.y) || findLineAt(logicPos.x, logicPos.y) || findCircleAt(logicPos.x, logicPos.y);
+    if (rightClickedShape) {
+        contextMenu.style.left = e.clientX + 'px'; contextMenu.style.top = e.clientY + 'px'; contextMenu.style.display = 'block';
+        const labelBtn = document.getElementById('cm-hide-label');
+        labelBtn.style.display = (rightClickedShape.type === 'point') ? 'block' : 'none';
+        labelBtn.textContent = (rightClickedShape.hideLabel) ? '👁️ 显示标签' : '👁️ 隐藏标签';
+    }
+});
+
+function deleteSelectedShape() { if (rightClickedShape) { saveState(); shapes = shapes.filter(s => s !== rightClickedShape); rightClickedShape = null; contextMenu.style.display = 'none'; redraw(); } }
+function toggleLabelVisibility() { if (rightClickedShape && rightClickedShape.type === 'point') { saveState(); rightClickedShape.hideLabel = !rightClickedShape.hideLabel; contextMenu.style.display = 'none'; redraw(); } }
+
+function drawAngles() {
+    if (!showAngles) return;
+    const lines = shapes.filter(s => s.type === 'line');
+    if (lines.length < 2) return;
+
+    let intersections = [];
+    for (let i = 0; i < lines.length; i++) {
+        for (let j = i + 1; j < lines.length; j++) {
+            const p = getLineIntersection(lines[i], lines[j]);
+            if (p) { if (!intersections.some(pt => dist(pt, p) < MERGE_THRESHOLD)) { intersections.push(p); } }
+        }
+    }
+
+    intersections.forEach(pt => {
+        let rayAngles = [];
+        lines.forEach(line => {
+            const A = {x: line.x1, y: line.y1}, B = {x: line.x2, y: line.y2};
+            const cross = Math.abs((B.x - A.x)*(A.y - pt.y) - (A.x - pt.x)*(B.y - A.y)); const len = dist(A, B);
+            if (len > 0 && (cross / len) < MERGE_THRESHOLD * 10) {
+                const angle = Math.atan2(line.y2 - line.y1, line.x2 - line.x1);
+                rayAngles.push(angle); rayAngles.push(angle > 0 ? angle - Math.PI : angle + Math.PI); 
+            }
+        });
+
+        rayAngles = rayAngles.map(a => (a + Math.PI * 2) % (Math.PI * 2)); rayAngles.sort((a, b) => a - b);
+        let uniqueAngles = [];
+        for (let a of rayAngles) { if (uniqueAngles.length === 0 || Math.abs(a - uniqueAngles[uniqueAngles.length - 1]) > 1e-4) { uniqueAngles.push(a); } }
+        if (uniqueAngles.length > 1 && Math.abs(uniqueAngles[uniqueAngles.length-1] - uniqueAngles[0] - Math.PI*2) < 1e-4) { uniqueAngles.pop(); }
+
+        if (uniqueAngles.length >= 2) {
+            for (let i = 0; i < uniqueAngles.length; i++) {
+                const a1 = uniqueAngles[i]; const a2 = uniqueAngles[(i + 1) % uniqueAngles.length];
+                let diff = a2 - a1; if (diff < 0) diff += Math.PI * 2; let deg = Math.round(diff * 180 / Math.PI);
+                if (deg >= 180 || deg < 1) continue;
+
+                let matchedAngle = null;
+                for (let special of [30, 45, 60, 90]) { if (Math.abs(deg - special) <= ANGLE_TOLERANCE) { matchedAngle = special; break; } }
+
+                const screenPt = toScreen(pt.x, pt.y);
+                const radius = 25; const boxSize = 12; const textOffset = 15; const fontSize = matchedAngle ? 12 : 10; 
+                const color = matchedAngle ? ANGLE_COLORS[matchedAngle] : '#8c8c8c'; const displayDeg = matchedAngle || deg;
+
+                ctx.save();
+                if (matchedAngle === 90) {
+                    const p1x = screenPt.x + boxSize * Math.cos(a1); const p1y = screenPt.y + boxSize * Math.sin(a1);
+                    const p2x = screenPt.x + boxSize * Math.cos(a1) + boxSize * Math.cos(a2); const p2y = screenPt.y + boxSize * Math.sin(a1) + boxSize * Math.sin(a2);
+                    const p3x = screenPt.x + boxSize * Math.cos(a2); const p3y = screenPt.y + boxSize * Math.sin(a2);
+                    ctx.beginPath(); ctx.moveTo(p1x, p1y); ctx.lineTo(p2x, p2y); ctx.lineTo(p3x, p3y); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.arc(screenPt.x, screenPt.y, radius, a1, a2); ctx.strokeStyle = color; ctx.lineWidth = matchedAngle ? 2 : 1; ctx.stroke();
+                }
+
+                const midAngle = a1 + diff / 2; const textRadius = radius + textOffset;
+                const textX = screenPt.x + textRadius * Math.cos(midAngle); const textY = screenPt.y + textRadius * Math.sin(midAngle) + 4; 
+                ctx.font = matchedAngle ? `bold ${fontSize}px Arial` : `${fontSize}px Arial`; ctx.fillStyle = color; ctx.textAlign = "center";
+                ctx.shadowColor = "white"; ctx.shadowBlur = 4; ctx.fillText(`${displayDeg}°`, textX, textY);
+                ctx.restore();
+            }
+        }
+    });
+}
+
+function redraw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (showGrid) drawGrid();
+    
+    shapes.forEach(s => {
+        const isSelected = (s === hoverLineObject && ['perp', 'parallel'].includes(currentMode) && tempPoints.length === 1) || (s === rightClickedShape);
+        const color = isSelected ? '#fa8c16' : '#333'; const width = isSelected ? 3 : 1.5;
+        if (s.type === 'line') {
+            const p1 = toScreen(s.x1, s.y1), p2 = toScreen(s.x2, s.y2); const dx = p2.x - p1.x, dy = p2.y - p1.y; const len = Math.sqrt(dx*dx + dy*dy);
+            if (len > 0) {
+                const diag = Math.sqrt(canvas.width**2 + canvas.height**2) + 500; const udx = dx/len, udy = dy/len;
+                ctx.beginPath(); ctx.moveTo(p1.x - udx * diag, p1.y - udy * diag); ctx.lineTo(p2.x + udx * diag, p2.y + udy * diag); ctx.strokeStyle = '#e8e8e8'; ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.stroke();
+            }
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash([]); ctx.stroke();
+        }
+        else if (s.type === 'circle') { const c = toScreen(s.x, s.y); ctx.beginPath(); ctx.arc(c.x, c.y, s.r * scale, 0, Math.PI*2); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.setLineDash([]); ctx.stroke(); }
+    });
+
+    drawAngles();
+
+    shapes.forEach(s => {
+        if (s.type === 'point') {
+            const p = toScreen(s.x, s.y); const isHover = (s === hoverPoint) || (s === rightClickedShape);
+            ctx.beginPath(); ctx.arc(p.x, p.y, isHover ? 5 : 3, 0, Math.PI*2); ctx.fillStyle = isHover ? '#1890ff' : '#000'; ctx.fill();
+            if (s.label && !s.hideLabel) { ctx.font = "bold 14px Arial"; ctx.fillStyle = "#000"; ctx.fillText(s.label, p.x + 8, p.y - 5); }
+        }
+    });
+    if (hoverIntersection) { const p = toScreen(hoverIntersection.x, hoverIntersection.y); ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fillStyle = '#ff4d4f'; ctx.fill(); }
+    else if (hoverPath) { const p = toScreen(hoverPath.x, hoverPath.y); ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fillStyle = '#52c41a'; ctx.fill(); }
+}
+
+function drawGrid() {
+    const step = 50 * scale; if (step < 10) return; 
+    ctx.beginPath(); ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
+    const startX = offsetX % step, startY = offsetY % step;
+    for (let x = startX; x < canvas.width; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); }
+    for (let y = startY; y < canvas.height; y += step) { ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); }
+    ctx.stroke();
+    const o = toScreen(0, 0);
+    ctx.beginPath(); ctx.strokeStyle = '#d9d9d9'; ctx.lineWidth = 2;
+    ctx.moveTo(o.x - 10, o.y); ctx.lineTo(o.x + 10, o.y); ctx.moveTo(o.x, o.y - 10); ctx.lineTo(o.x, o.y + 10); ctx.stroke();
+}
+
+function updateCoords(x, y) { coordsText.textContent = `X: ${Math.round(x)}, Y: ${Math.round(y)} | ${Math.round(scale * 100)}%`; }
+function showTooltip(x, y, text) { tooltip.style.left = x + 'px'; tooltip.style.top = y + 'px'; tooltip.textContent = text; tooltip.style.display = 'block'; }
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); redo(); }
+    if (e.code === 'Space') { e.preventDefault(); setMode('pan'); }
+    if (e.key === 'Delete' || e.key === 'Backspace') { if(hoverPoint || hoverLineObject) { rightClickedShape = hoverPoint || hoverLineObject; deleteSelectedShape(); } }
+});
+
+renderHomeOverview();
+renderCampaignOverview();
+refreshWorkspaceDate();
+</script>
+</body>
+</html>
